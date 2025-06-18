@@ -7,7 +7,7 @@ app.use(express.json());
 
 // Blockchain config (update with deployed contract address and ABI)
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '';
-const CONTRACT_ABI = require('../contracts/PatientRecords.json'); // Placeholder, update after compilation
+const CONTRACT_ABI = require('D:/Blockchain/BlockchainHealth/Project-Copy/Hardhat/artifacts/contracts/PatientRecords.sol/PatientRecords.json'); // Placeholder, update after compilation
 const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545');
 const signer = provider.getSigner();
 const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);

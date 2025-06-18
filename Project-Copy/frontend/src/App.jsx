@@ -1,37 +1,41 @@
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import "./App.css";
-import abi from "../../Hardhat/artifacts/contracts/PatientRecords.sol/PatientRecords.json";
+import abi from "D:/Blockchain/BlockchainHealth/Project-Copy/Hardhat/artifacts/contracts/PatientRecords.sol/PatientRecords.json";
 
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // TODO: Replace with your contract address
-const CONTRACT_ABI = abi.abi;
+import contractJson from "./contracts/PatientRecords.json";
+import addressJson from "./contracts/contract-address.json";
+
+const CONTRACT_ABI = contractJson.abi;
+const CONTRACT_ADDRESS = addressJson.PatientRecords;
 
 function App() {
   const [account, setAccount] = useState("");
   const [contract, setContract] = useState(null);
-  const [role, setRole] = useState("doctor"); // default role
+  const [role, setRole] = useState("doctor");
 
-  useEffect(() => {
-    const loadBlockchain = async () => {
-      if (window.ethereum) {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        const userAddress = await signer.getAddress();
-        setAccount(userAddress);
+ useEffect(() => {
+  const loadBlockchain = async () => {
+    if (window.ethereum) {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+      setAccount(userAddress);
 
-        const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-        setContract(contractInstance);
+      const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      setContract(contractInstance);
 
-        const roleId = await contract.roles(userAddress);
+      try {
+        const roleId = await contractInstance.roles(userAddress);
         console.log("Connected Role:", roleId.toString());
-
-
-      } else {
-        alert("Please install MetaMask.");
+      } catch (error) {
+        console.error("Failed to fetch role:", error);
       }
-    };
-    loadBlockchain();
-  }, []);
+    }
+  };
+
+  loadBlockchain();
+}, []);
 
   return (
     <div className="App">
@@ -69,18 +73,36 @@ function DoctorView({ contract }) {
 
   const handleView = async () => {
     try {
-      const result = await contract.viewRecords(patientAddress);
-      setRecords(result);
+      // Check if patientAddress is valid
+      if (!ethers.isAddress(patientAddress)) {
+        alert("Please enter a valid Ethereum address");
+        return;
+      }
+
+      const count = await contract.getRecordCount(patientAddress);
+      console.log("Record count:", count.toString());
+      
+      const fetchedRecords = [];
+      for (let i = 0; i < count; i++) {
+        const record = await contract.getRecordAt(patientAddress, i);
+        fetchedRecords.push({ 
+          dataHash: record[0], 
+          verified: record[1] 
+        });
+      }
+      
+      setRecords(fetchedRecords);
     } catch (err) {
-      alert("View error: " + err.reason);
+      console.error("Detailed error:", err);
+      alert("View error: " + (err.reason || err.message));
     }
-  };
+};
 
   return (
     <div className="card">
       <h2>Doctor View</h2>
       <input placeholder="Patient Address" value={patientAddress} onChange={(e) => setPatientAddress(e.target.value)} />
-      <input placeholder="IPFS Hash" value={dataHash} onChange={(e) => setDataHash(e.target.value)} />
+      <input placeholder="Sickness" value={dataHash} onChange={(e) => setDataHash(e.target.value)} />
       <button onClick={handleUpload}>Upload</button>
       <button onClick={handleView}>View Records</button>
 
@@ -124,8 +146,15 @@ function AdminView({ contract }) {
 
   const handleView = async () => {
     try {
-      const result = await contract.viewRecords(patientAddress);
-      setRecords(result);
+      const count = await contract.getRecordCount(patientAddress);
+      const fetchedRecords = [];
+
+      for (let i = 0; i < count; i++) {
+        const [dataHash, verified] = await contract.getRecordAt(patientAddress, i);
+        fetchedRecords.push({ dataHash, verified });
+      }
+
+      setRecords(fetchedRecords);
     } catch (err) {
       alert("View error: " + err.reason);
     }
@@ -141,7 +170,7 @@ function AdminView({ contract }) {
 
       <h3>Grant/Revoke Access</h3>
       <input placeholder="Grantee Address" value={grantee} onChange={(e) => setGrantee(e.target.value)} />
-      <select value={grantValue} onChange={(e) => setGrantValue(e.target.value === "true")}> 
+      <select value={grantValue} onChange={(e) => setGrantValue(e.target.value === "true")}>
         <option value="true">Grant</option>
         <option value="false">Revoke</option>
       </select>
@@ -161,14 +190,26 @@ function AdminView({ contract }) {
 function PatientView({ contract, account }) {
   const [records, setRecords] = useState([]);
 
-  const handleView = async () => {
+const handleView = async () => {
     try {
-      const result = await contract.viewRecords(account);
-      setRecords(result);
+      const count = await contract.getRecordCount(account);
+      console.log("My record count:", count.toString());
+      
+      const fetchedRecords = [];
+      for (let i = 0; i < count; i++) {
+        const record = await contract.getRecordAt(account, i);
+        fetchedRecords.push({ 
+          dataHash: record[0], 
+          verified: record[1] 
+        });
+      }
+      
+      setRecords(fetchedRecords);
     } catch (err) {
-      alert("View error: " + err.reason);
+      console.error("Detailed error:", err);
+      alert("View error: " + (err.reason || err.message));
     }
-  };
+};
 
   return (
     <div className="card">
