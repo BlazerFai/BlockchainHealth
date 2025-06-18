@@ -35,4 +35,4 @@ npx hardhat node
 npx hardhat run scripts/deploy.js --network localhost
 ```
 2. **Connect frontend with MetaMask**
-Make sure MetaMask is connected to the correct network.
+- Make sure MetaMask is connected to the correct network.
