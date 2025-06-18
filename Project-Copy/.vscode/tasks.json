@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend Server",
+      "type": "shell",
+      "command": "node backend/index.js",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Frontend Dev Server",
+      "type": "shell",
+      "command": "cd frontend && npm run dev",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Compile Contracts",
+      "type": "shell",
+      "command": "cd contracts && npx hardhat compile",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
